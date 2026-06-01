@@ -1,2 +1,4 @@
 .history-backup-*.jsonl
 .claude/
+practical/demo/server
+practical/demo/client
