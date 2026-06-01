@@ -4,9 +4,7 @@
 
 ---
 
-## 任务 1：编写 TCP Echo 服务器
-
-在当前目录（`practical/demo/`）创建 `server.cpp`，写入以下代码：
+## 服务器端完整代码
 
 ```cpp
 #include <iostream>
@@ -23,7 +21,7 @@ int main() {
         return 1;
     }
 
-    // 允许端口复用
+    // 允许端口复用（防止重启时 "Address already in use"）
     int opt = 1;
     setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
@@ -55,22 +53,18 @@ int main() {
         std::cout << "[服务器] 已回送\n";
     }
 
+    // 7. 关闭
     close(client_fd);
     close(server_fd);
     return 0;
 }
 ```
 
-编译：
-```bash
-g++ -std=c++17 -o server server.cpp
-```
+编译：`g++ -std=c++17 -o server server.cpp`
 
 ---
 
-## 任务 2：编写 TCP 客户端
-
-创建 `client.cpp`：
+## 客户端完整代码
 
 ```cpp
 #include <iostream>
@@ -108,77 +102,66 @@ int main() {
 }
 ```
 
-编译：
-```bash
-g++ -std=c++17 -o client client.cpp
-```
+编译：`g++ -std=c++17 -o client client.cpp`
 
 ---
 
-## 任务 3：自己动手跑
+## 任务 1：编译运行
 
-打开**两个终端**，都在 `practical/demo/` 目录下。
-
-终端 1：
+**终端 1：**
 ```bash
+cd /home/music1206/projects/network-study/practical/demo
 ./server
 ```
 
-终端 2：
+**终端 2：**
 ```bash
+cd /home/music1206/projects/network-study/practical/demo
 ./client
 ```
 
-两个终端分别输出什么？记录下来。
+两个终端分别输出什么？
 
 ---
 
-## 任务 4：用 strace 看系统调用
+## 任务 2：用 strace 看系统调用
 
 ```bash
+# 先起 server，再在另一个终端执行：
 strace -e trace=network ./client 2>&1
 ```
 
-你会看到类似这样的输出：
+你会看到：
 ```
 socket(AF_INET, SOCK_STREAM, ...) = 3
-connect(3, ...) = 0
-sendto(3, "Hello TCP!\n", ...) = 11
-recvfrom(3, ...) = 11
+connect(3, ...) = 0           ← 三次握手
+sendto(3, "Hello TCP!\n", ...) = 11  ← 发送 11 字节
+recvfrom(3, ...) = 11         ← 接收 11 字节
 ```
-
-**对照你的理论：**
-- `connect()` = 三次握手
-- `close()` = 四次挥手（也在输出里，找找看）
 
 ---
 
-## 任务 5：用 ss 看连接状态
+## 任务 3：用 ss 看连接状态
 
-终端 1 先起 server，终端 2 执行：
+服务器跑起来后，另一个终端：
 ```bash
-# 服务器起来后，看监听状态
-ss -tlnp | grep 9999
+ss -tlnp | grep 9999     # 看 LISTEN 状态
 ```
 
-然后起 client，在 client 跑完前（加个 `sleep` 或者用 `nc` 连上去挂着），另一个终端：
+客户端连接期间：
 ```bash
-# 看已建立的连接
-ss -tnp | grep 9999
+ss -tnp | grep 9999      # 看 ESTABLISHED 状态
 ```
 
 ---
 
 ## 理解确认
 
-完成以上操作后，用自己的话回答：
-
-1. 服务器的 `socket() → bind() → listen() → accept() → recv() → send() → close()` 七步，每一步对应什么现实动作？
-2. `connect()` 为什么就是三次握手？你看 strace 输出中 connect 返回 0 意味着什么？
-3. `htons(9999)` 是干什么的？为什么需要它？
-
-把答案写在下面（或者口头说一遍）。
+1. 服务器七步 `socket() → bind() → listen() → accept() → recv() → send() → close()` 每步的职责是什么？
+2. `server_fd` 和 `client_fd` 有什么区别？为什么需要两个？
+3. `connect()` 为什么等于三次握手？
+4. `htons()` 不调用行不行？为什么？
 
 ---
 
-> 下一步：完成确认后进入 [strace 深入追踪](02_strace追踪系统调用.md)
+> 所有函数详细讲解见 [Socket 函数速查手册](socket-api-reference.md)
