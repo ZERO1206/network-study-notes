@@ -1,8 +1,8 @@
-#include <iostream>
-#include <cstring>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
+#include <iostream>  // std::cout std::cerr --- 打印信息到终端
+#include <cstring>  // strlen() --- 读取字符串长度  
+#include <sys/socket.h>  // socket/bind/listen/accept/send/recv --- 所以网络函数
+#include <netinet/in.h>  // sockaddr_in 结构体 htons INADDR_ANY
+#include <unistd.h>  // close() --- 关闭文件描述符(socket也是fd)
 
 int main() {
     // 创建socket

@@ -2,7 +2,7 @@
 #include <cstring>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
+#include <arpa/inet.h>  // inet_pton()/inet_ntop() --- IP字符串↔二进制转换
 #include <unistd.h>
 
 int main() {
