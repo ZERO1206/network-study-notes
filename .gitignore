@@ -2,3 +2,5 @@
 .claude/
 practical/demo/server
 practical/demo/client
+practical/demo/udp_server
+practical/demo/udp_client
