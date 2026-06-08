@@ -128,48 +128,32 @@ tcpdump 用方括号标注每个包的 TCP 标志位：
 
 ---
 
-## 六、如何抓到这些包
+## 六、动手操作
 
-### 真实 Linux / 云服务器（完整行为）
+### 任务：抓一次完整的 TCP 通信
 
+用之前写的 server/client 来实际操作。
+
+**终端 1 — 抓包：**
 ```bash
-# 终端1：抓 lo 接口上 9999 端口的包
 sudo tcpdump -i lo -nn port 9999
-
-# 终端2：先起 server
-./server
-
-# 终端3：跑 client
-./client
-
-# 终端1 会依次输出 [S] [S.] [.] [P.] [.] [F.] [.] [F.] [.] 9 个包
 ```
 
-### WSL2 替代方案
-
-WSL2 的 lo 抓不到。用 `strace` 看系统调用等价验证：
-
+**终端 2 — 起服务器：**
 ```bash
-strace -e trace=network ./client 2>&1
-# connect() 返回 = 前 3 个包（[S] [S.] [.]）已完成
-# sendto() = 数据包发出
-# recvfrom() = 回复收到
-# close() = 后 4 个包（[F.] [.] [F.] [.]）已触发
+cd /home/music1206/projects/network-study/practical/demo
+./server
 ```
 
-两者看的是同一件事的不同层面：
+**终端 3 — 跑客户端：**
+```bash
+cd /home/music1206/projects/network-study/practical/demo
+./client
 ```
-tcpdump → 网卡上跑的原始报文（包级别）
-strace  → 程序调的系统调用（函数级别）
-```
 
-有云服务器后用第一种方式亲眼验证即可。
+终端 1 会依次输出 `[S] → [S.] → [.] → [P.] → [.] → [F.] → [.] → [F.] → [.]` 共 9 个包。对比第四节的手册逐一辨认每个包。
 
----
-
-## 七、验证 TIME_WAIT
-
-用 `ss` 抓四次挥手后的残留状态——这个无需 tcpdump，在你现有环境就能看：
+### 验证 TIME_WAIT
 
 ```bash
 # 终端1：./server
@@ -177,7 +161,7 @@ strace  → 程序调的系统调用（函数级别）
 ./client && ss -tnp | grep 9999
 ```
 
-立刻执行，你能看到一条 `TIME-WAIT` 连接——**谁先 close 谁进 TIME_WAIT，持续约 60 秒。** 这就是挥手第 9 个包（客户端最后的 ACK）发出后的状态。
+立刻执行，你能看到一条 `TIME-WAIT` 连接——**谁先 close 谁进 TIME_WAIT，持续约 60 秒。** 这就是挥手最后一个 `[.]`（客户端 ACK）发出后的状态。
 
 ---
 

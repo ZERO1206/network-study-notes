@@ -350,12 +350,6 @@ sudo tcpdump -i eth0 src 192.168.1.5 or src 192.168.1.6
 sudo tcpdump -i eth0 not port 22
 ```
 
-### WSL2 限制
-
-WSL2 的虚拟网卡 tcpdump 抓 lo（本地环回）可能抓不到，走代理的流量也抓不到（代理在 Windows 宿主机）。这些不是 tcpdump 的问题，是 WSL2 网络虚拟化的限制。**在有云服务器或原生 Linux 上 tcpdump 完全正常。**
-
-替代方案：用 `strace -e trace=network` 看系统调用（connect/send/recv/close）。
-
 ---
 
 ## 八、strace — 追踪系统调用
@@ -466,7 +460,6 @@ nc -l 9999
 # 终端 3：发消息
 echo "Catch this!" | nc 127.0.0.1 9999
 ```
-WSL2 抓不到的话改用 `strace -e trace=network nc 127.0.0.1 9999` 替代。
 
 ---
 
