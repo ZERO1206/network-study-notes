@@ -28,5 +28,3 @@ which g++ ss curl nc tcpdump strace
 | 4 | tcpdump 抓包（TCP 握手挥手） | 30min | ✅ |
 | 5 | 实战项目：简易聊天室 | 1h | ⬜ |
 | 6 | 实战项目：简易 HTTP 服务器 | 1h | ⬜ |
-| 6 | 实战项目：简易聊天室 | 1h | ⬜ |
-| 7 | 实战项目：简易 HTTP 服务器 | 1h | ⬜ |
