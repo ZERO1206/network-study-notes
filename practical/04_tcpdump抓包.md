@@ -165,7 +165,7 @@ cd /home/music1206/projects/network-study/practical/demo
 
 ---
 
-## 八、理解确认
+## 八、自测题
 
 1. `[S]`、`[S.]`、`[.]`、`[F.]` 各代表什么 TCP 包？
 2. 为什么握手和挥手包的 `length 0`？
@@ -173,4 +173,13 @@ cd /home/music1206/projects/network-study/practical/demo
 4. connect() 返回成功时，tcpdump 应该已经抓到了哪几个包？
 5. 哪个包之后客户端进入 TIME_WAIT？
 
-> 答案：1-SYN/SYN+ACK/ACK/FIN+ACK  2-只交换控制信息无数据  3-[F.][.][F.][.]  4-前3个[S][S.][.]  5-挥手最后一个[.]
+<details>
+<summary>点击查看答案</summary>
+
+1. [S]=SYN(第一次握手)，[S.]=SYN+ACK(第二次握手)，[.]=纯ACK(确认，无SYN/FIN)，[F.]=FIN+ACK(断开请求+确认)
+2. 握手和挥手包只交换 TCP 头部控制信息(标志位+序号)，不携带应用数据。length>0 才是有数据的包(如 11 字节="Hello TCP!\n")
+3. [F.]→[.]→[F.]→[.]（客户端 FIN+ACK→服务器 ACK→服务器 FIN+ACK→客户端 ACK）
+4. 前 3 个：[S][S.][.]，三次握手完成 connect() 才返回
+5. 挥手最后一个 [.]（客户端发出的 ACK）之后，客户端进入 TIME_WAIT
+
+</details>

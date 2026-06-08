@@ -314,13 +314,24 @@ TCP: socket() → connect() → sendto() → recvfrom() → close()
 
 ---
 
-## 七、理解确认
+## 七、自测题
 
 1. UDP 代码和 TCP 代码最大的三个区别是什么？
 2. `sendto()` 为什么需要后两个参数而 `send()` 不需要？
 3. `recvfrom()` 的后两个参数什么时候填 `nullptr`？什么时候不能？
 4. UDP 客户端先跑（服务器没开），`sendto()` 报错吗？为什么？
 5. UDP 的 `close()` 和 TCP 的 `close()` 有什么不同？
+
+<details>
+<summary>点击查看答案</summary>
+
+1. ① SOCK_DGRAM 替代 SOCK_STREAM；② 没有 listen/accept/connect，socket 创建+bind 后直接收发；③ sendto/recvfrom 替代 send/recv，每次必须传目标地址参数
+2. UDP 无连接，socket 没有绑定到特定对方，每次发送都要指定"发给谁"。TCP 的 fd 在 connect/accept 后已经和对方绑定，send 不需要再指定
+3. 不关心来源时填 nullptr（如客户端知道回复一定来自服务器）。需要知道来源时不能填（如服务器需要客户端地址来回送消息）
+4. sendto() 不报错，照常返回成功。UDP 无连接，sendto 只把数据丢进发送队列就返回，不管对方存不存在。但 recvfrom() 会永远阻塞——没人回复
+5. TCP close() 触发四次挥手(FIN→ACK→FIN→ACK)，UDP close() 只是释放本地资源，不产生任何网络流量
+
+</details>
 
 ---
 

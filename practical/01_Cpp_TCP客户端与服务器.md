@@ -543,7 +543,7 @@ recvfrom(3, "Hello TCP!\n", 1023, ...) = 11  ← 接收 11 字节
 
 ---
 
-## 五、理解确认
+## 五、自测题
 
 1. 服务器 8 步 `socket → setsockopt → bind → listen → accept → recv → send → close` 每步的职责各一句话
 2. `server_fd` 和 `client_fd` 有什么区别？为什么服务端需要两个，客户端只需要一个？
@@ -551,6 +551,18 @@ recvfrom(3, "Hello TCP!\n", 1023, ...) = 11  ← 接收 11 字节
 4. `htons()` 不调用行不行？为什么？
 5. `recv()` 返回 0 代表什么？你的代码有处理吗？
 6. 客户端 `close()` 后，哪一方进入 TIME_WAIT？为什么不是另一方？
+
+<details>
+<summary>点击查看答案</summary>
+
+1. socket=创建电话机、setsockopt=允许端口复用、bind=插上电话线登记号码、listen=开始等电话、accept=接电话(阻塞)、recv=听对方说话、send=回话、close=挂断触发四次挥手
+2. server_fd 只用来接新连接(accept)，一个程序只有一个；client_fd 用来和具体客户端通信(send/recv)，每 accept 一次产生一个。客户端只需要 sock 这一个 fd，因为它是主动发起方，连上对方后直接用它收发
+3. connect() 向服务器发起连接，内核自动完成 SYN→SYN+ACK→ACK 三次握手后才返回。一行代码=三次握手是因为协议栈在内核里
+4. 不行。x86 是小端，网络是大端。不转 htons(9999) 对方按网络序解读成 3879，端口对不上 connect 失败
+5. recv() 返回 0 = 对方已调用 close()，连接关闭(FIN 已收到)。当前代码只处理了 n>0 的情况，没有处理 n=0 和 n<0
+6. 客户端进 TIME_WAIT。因为客户端先 close(sock)，主动关闭方进 TIME_WAIT，持续约 60 秒
+
+</details>
 
 ---
 
