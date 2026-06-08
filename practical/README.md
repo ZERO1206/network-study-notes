@@ -25,6 +25,8 @@ which g++ ss curl nc tcpdump strace
 | 2 | Linux 网络诊断命令 | 30min | ✅ |
 | 3 | C++ UDP 通信 | 30min | ✅ |
 | 🔧 | [Socket API 函数速查手册](socket-api-reference.md) | 随时查阅 | — |
-| 4 | 抓包看三次握手四次挥手 | 30min | ⬜（需 Wireshark） |
+| 4 | tcpdump 抓包（TCP 握手挥手） | 30min | ✅ |
+| 5 | 实战项目：简易聊天室 | 1h | ⬜ |
+| 6 | 实战项目：简易 HTTP 服务器 | 1h | ⬜ |
 | 6 | 实战项目：简易聊天室 | 1h | ⬜ |
 | 7 | 实战项目：简易 HTTP 服务器 | 1h | ⬜ |
