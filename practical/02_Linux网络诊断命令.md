@@ -84,6 +84,13 @@ curl -I http://www.baidu.com
 curl -L http://baidu.com
 ```
 
+### 动手验证
+
+```bash
+curl -v http://www.baidu.com 2>&1 | head -30
+```
+找出 `>`（请求）、`<`（响应）、`*`（连接日志）各一行，写下来。
+
 ---
 
 ## 二、ss — 查看 socket 状态
@@ -138,6 +145,15 @@ ss -tnp state established
 | `CLOSE-WAIT` | 挥手 | 被动关闭方收到 FIN，还没 close |
 | `TIME-WAIT` | 挥手后 | 主动关闭方等 2MSL（~60 秒） |
 
+### 动手验证
+
+```bash
+ss -tlnp                        # 本机所有监听端口
+ss -tnp state established       # 所有已建立的连接
+```
+
+启动 `nc -l 9999`，另开终端查 `ss -tlnp | grep 9999`，确认能看到 LISTEN。
+
 ---
 
 ## 三、nc（netcat）— TCP/UDP 瑞士军刀
@@ -174,6 +190,10 @@ nc -zv baidu.com 80
 nc -zv 127.0.0.1 9999
 # Connection to 127.0.0.1 9999 port [tcp/*] succeeded!
 ```
+
+### 动手验证
+
+终端 1：`nc -l 9999`，终端 2：`nc 127.0.0.1 9999`。互相打字，看对方能不能收到。
 
 ---
 
@@ -222,6 +242,13 @@ rtt min/avg/max/mdev = 71.674/83.938/105.490/13.607 ms
 
 **ping 不通 != 对方挂了。** 很多服务器防火墙屏蔽 ICMP（禁 ping），但正常 TCP/HTTP 服务照常工作。
 
+### 动手验证
+
+```bash
+ping -c 4 baidu.com
+```
+记录 min/avg/max RTT 和丢包率。
+
 ---
 
 ## 五、traceroute — 看路径
@@ -259,6 +286,14 @@ traceroute 利用 TTL 递增 + ICMP Time Exceeded：
 ...
 直到 TTL 够大到达目的地 → 目的主机回 ICMP Echo Reply → 结束
 ```
+
+### 动手验证
+
+```bash
+sudo apt install traceroute -y
+traceroute baidu.com
+```
+数有几跳 `* * *`，想一想为什么。
 
 ---
 
@@ -302,6 +337,15 @@ sudo apt install bind9-dnsutils -y   # nslookup 和 dig 都在这包里
 ```bash
 nslookup 110.242.74.102    # IP → 域名（反向解析）
 ```
+
+### 动手验证
+
+```bash
+sudo apt install bind9-dnsutils -y
+nslookup baidu.com
+nslookup github.com
+```
+百度返回了几个 IP？为什么一个域名对应多个 IP？
 
 ---
 
@@ -350,6 +394,19 @@ sudo tcpdump -i eth0 src 192.168.1.5 or src 192.168.1.6
 sudo tcpdump -i eth0 not port 22
 ```
 
+### 动手验证
+
+```bash
+# 终端 1：抓包
+sudo tcpdump -i lo -A port 9999
+
+# 终端 2：起 nc 服务端
+nc -l 9999
+
+# 终端 3：发消息
+echo "Catch this!" | nc 127.0.0.1 9999
+```
+
 ---
 
 ## 八、strace — 追踪系统调用
@@ -381,7 +438,15 @@ recvfrom(3, "Hello TCP!\n", 1023, 0, NULL, NULL) = 11
 | `sendto(3, ..., 11, ...)` | 发送了 11 字节 |
 | `recvfrom(3, ..., 1023, ...)` | 接收到回复 |
 | 程序退出时 `close(3)` | 触发**四次挥手** |
+
+### 动手验证
+
+```bash
+# 终端1：先起 ./server
+# 终端2：
+strace -e trace=network ./client 2>&1
 ```
+对比第一课里的输出，找出 connect/sendto/recvfrom 各自对应的行。
 
 ---
 
@@ -406,59 +471,6 @@ recvfrom(3, "Hello TCP!\n", 1023, 0, NULL, NULL) = 11
 
 ① strace 看 send/recv 调用了没
 ② tcpdump -A 抓包看实际传输了什么
-```
-
----
-
-## 十、任务清单
-
-### 任务 1：curl 看 HTTP 交互
-```bash
-curl -v http://www.baidu.com 2>&1 | head -30
-```
-找出 `>`（请求）、`<`（响应）、`*`（连接日志）各一行，写下来。
-
-### 任务 2：ss 查端口
-```bash
-ss -tlnp                        # 本机所有监听
-ss -tnp state established       # 所有已建立的连接
-```
-然后启动 `nc -l 9999`，另开终端查 `ss -tlnp | grep 9999`，确认能看到 LISTEN。
-
-### 任务 3：nc 双终端聊天
-终端 1：`nc -l 9999`，终端 2：`nc 127.0.0.1 9999`。互相打字，看对方能不能收到。
-
-### 任务 4：ping 测通断
-```bash
-ping -c 4 baidu.com
-```
-记录 min/avg/max RTT 和丢包率。
-
-### 任务 5：traceroute 看路径
-```bash
-sudo apt install traceroute -y
-traceroute baidu.com
-```
-数有几跳 `* * *`，想一想为什么。
-
-### 任务 6：nslookup 查 DNS
-```bash
-sudo apt install bind9-dnsutils -y
-nslookup baidu.com
-nslookup github.com
-```
-百度返回了几个 IP？为什么？
-
-### 任务 7：tcpdump 抓本地流量
-```bash
-# 终端 1：抓包
-sudo tcpdump -i lo -A port 9999
-
-# 终端 2：起 nc
-nc -l 9999
-
-# 终端 3：发消息
-echo "Catch this!" | nc 127.0.0.1 9999
 ```
 
 ---
