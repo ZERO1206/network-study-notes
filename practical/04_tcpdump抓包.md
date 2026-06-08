@@ -141,13 +141,13 @@ sudo tcpdump -i lo -nn port 9999
 
 **终端 2 — 起服务器：**
 ```bash
-cd /home/music1206/projects/network-study/practical/demo
+cd practical/demo
 ./server
 ```
 
 **终端 3 — 跑客户端：**
 ```bash
-cd /home/music1206/projects/network-study/practical/demo
+cd practical/demo
 ./client
 ```
 

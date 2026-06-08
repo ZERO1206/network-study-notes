@@ -488,13 +488,13 @@ close(server_fd)
 
 **终端 1：**
 ```bash
-cd /home/music1206/projects/network-study/practical/demo
+cd practical/demo
 ./server
 ```
 
 **终端 2：**
 ```bash
-cd /home/music1206/projects/network-study/practical/demo
+cd practical/demo
 ./client
 ```
 

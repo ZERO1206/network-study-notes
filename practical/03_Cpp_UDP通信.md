@@ -278,7 +278,7 @@ close()                             close() ← 直接关，没有挥手
 ### 任务 1：编译运行
 
 ```bash
-cd /home/music1206/projects/network-study/practical/demo
+cd practical/demo
 g++ -std=c++17 -o udp_server udp_server.cpp
 g++ -std=c++17 -o udp_client udp_client.cpp
 ```
