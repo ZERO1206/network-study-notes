@@ -26,5 +26,5 @@ which g++ ss curl nc tcpdump strace
 | 3 | C++ UDP 通信 | 30min | ✅ |
 | 🔧 | [Socket API 函数速查手册](socket-api-reference.md) | 随时查阅 | — |
 | 4 | tcpdump 抓包（TCP 握手挥手） | 30min | ✅ |
-| 5 | 实战项目：简易聊天室 | 1h | ⬜ |
+| 5 | 实战项目：简易聊天室 | 1h | ✅ |
 | 6 | 实战项目：简易 HTTP 服务器 | 1h | ⬜ |
