@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <sys/epoll.h>
 
 int main() {
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -22,54 +23,51 @@ int main() {
 
     std::vector<int> clients;  // 存储所有已连接客户端
 
+    int epoll_fd = epoll_create1(0);    // 创建管家
+
+    struct epoll_event ev;      // 准备事件结构体
+    ev.events = EPOLLIN;
+    ev.data.fd = server_fd;
+    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_fd, &ev);     // 注册server_fd
+
+    struct epoll_event events[1024];    // 接收数组
+
     while(true) {
-        fd_set read_fds;
-        FD_ZERO(&read_fds);
-        FD_SET(server_fd, &read_fds);
-        int max_fd = server_fd;
+        int n = epoll_wait(epoll_fd, events, 1024, -1);
 
-        // 把所有客户端fd加入监控集合
-        for(int fd : clients) {
-            FD_SET(fd, &read_fds);
-            if(fd > max_fd) max_fd = fd;
-        }
+        for(int i = 0; i < n; ++i) {
+            int fd = events[i].data.fd;
 
-        // select阻塞等待
-        select(max_fd + 1, &read_fds, nullptr, nullptr, nullptr);
-
-        // 1、先检查是否有新的连接
-        if(FD_ISSET(server_fd, &read_fds)) {
-            int client_fd = accept(server_fd, nullptr, nullptr);
-            clients.push_back(client_fd);
-            std::cout << "[聊天室] 新用户加入 fd=" << client_fd
-                      << " (共" << clients.size() << "人在线)\n";
-        }
-
-        // 2、逐个检查已有客户端是否有消息
-        char buf[1024];
-        for(auto it = clients.begin(); it != clients.end(); ) {
-            int fd = *it;
-            if(FD_ISSET(fd, &read_fds)) {
-                int n = recv(fd, buf, sizeof(buf) - 1, 0);
-                if(n <= 0) {
-                    // 客户端断开
-                    if(n == 0)
-                        std::cout << "[聊天室] 用户离开 fd=" << fd << "\n";
+            if(fd == server_fd) {
+                int client_fd = accept(server_fd, nullptr, nullptr);
+                ev.events = EPOLLIN;
+                ev.data.fd = client_fd;
+                epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &ev);     // 注册新客户端
+                clients.push_back(client_fd);
+                std::cout << "[聊天室] 新用户 fd=" << client_fd << "\n";
+            }
+            else {
+                char buf[1024];
+                int m = recv(fd, buf, sizeof(buf), 0);
+                if(m <= 0) {
+                    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, nullptr);
                     close(fd);
-                    it = clients.erase(it);
-                    continue;
+                    // 从clients vector 移除
+                    for(auto it = clients.begin(); it != clients.end(); ++it) {
+                        if(*it == fd) { clients.erase(it); break; }
+                    }
+                    std::cout << "[聊天室] 离开 fd=" << fd << "\n";
                 }
-                buf[n] = '\0';
-                std::cout << "[聊天室] fd=" << fd << " 说: " << buf;
-
-                // 广播给所有人(除了发送者自己)
-                for(int other : clients) {
-                    if(other != fd) {
-                        send(other, buf, n , 0);
+                else {
+                    buf[m] = '\0';
+                    // 广播给其他人
+                    for(int other : clients) {
+                        if(other != fd) {
+                            send(other, buf, m, 0);
+                        }
                     }
                 }
             }
-            ++it;
         }
     }
 
