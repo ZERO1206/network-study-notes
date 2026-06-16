@@ -105,13 +105,29 @@ while (true) {
 
 select 返回后会**修改 bitmap**：只有"有动静"的 fd 保留 1，其他全清零。下一轮循环如果不重建，没动静的 fd 就再也不会被监控了。
 
-```
-select 前：fd=3=1, fd=4=1, fd=5=1  ← "盯着这三个"
-    ↓ select()
-select 后：fd=3=0, fd=4=1, fd=5=0  ← "只有 fd=4 有消息"
+<details>
+<summary>点击展开：select 前后 bitmap 变化</summary>
 
-下一轮必须重新 FD_SET，否则 fd=3 和 fd=5 就丢了！
+```mermaid
+flowchart LR
+    subgraph Before["select 前"]
+        B1["fd=3 ✓ 盯"]
+        B2["fd=4 ✓ 盯"]
+        B3["fd=5 ✓ 盯"]
+    end
+    subgraph After["select 后"]
+        A1["fd=3 ✗ 清零"]
+        A2["fd=4 ✓ 有动静"]
+        A3["fd=5 ✗ 清零"]
+    end
+    Before -->|"select()"| After
+
+    style A1 fill:#ffcdd2
+    style A3 fill:#ffcdd2
+    style A2 fill:#e8f5e9
 ```
+
+</details>
 
 ### `max_fd` 的作用
 
@@ -207,14 +223,20 @@ fclose(fp);                     // 关闭文件
 
 **fseek + ftell + rewind 流程：**
 
-```
-文件：[H][T][M][L][.]
-位置： 0  1  2  3  4  5
+<details>
+<summary>点击展开：文件位置指针移动示意</summary>
 
-fseek(fp, 0, SEEK_END) → 位置跳到 5
-ftell(fp) → 5           → 拿到文件大小
-rewind(fp) → 位置回到 0  → 准备读
+```mermaid
+sequenceDiagram
+    participant FP as 文件位置指针
+    Note over FP: 初始位置 = 0
+    FP->>FP: fseek(SEEK_END)<br/>跳到末尾 位置=5
+    Note over FP: ftell(fp) → 5<br/>拿到文件大小
+    FP->>FP: rewind(fp)<br/>回到开头 位置=0
+    Note over FP: 准备 fread 从头读入
 ```
+
+</details>
 
 ### 第三步：后缀 → Content-Type 映射
 
@@ -224,12 +246,25 @@ const char* ext = strrchr(filepath, '.');    // 从右往左找 '.'
 
 `strrchr`（string reverse char）：**从右往左**找第一个匹配字符。
 
-```
-filepath = "www/style.min.css"
+<details>
+<summary>点击展开：strchr vs strrchr 对比</summary>
 
-strchr  (从左往右) → ".style.min.css"  ❌
-strrchr (从右往左) → ".css"           ✅
+```mermaid
+flowchart LR
+    subgraph strchr["strchr: 从左往右"]
+        direction LR
+        A1["w w w / s t y l e . m i n . c s s"] --> A2["找到第一个 '.' → '.min.css' ❌"]
+    end
+    subgraph strrchr["strrchr: 从右往左"]
+        direction LR
+        B1["w w w / s t y l e . m i n . c s s"] --> B2["找到最后一个 '.' → '.css' ✅"]
+    end
+
+    style A2 fill:#ffcdd2
+    style B2 fill:#e8f5e9
 ```
+
+</details>
 
 ```cpp
 if (strcmp(ext, ".html") == 0)      content_type = "text/html; charset=utf-8";
@@ -253,13 +288,27 @@ else                                 content_type = "application/octet-stream";
 
 ### 响应格式（死格式）
 
+<details>
+<summary>点击展开：HTTP 响应四部分结构</summary>
+
+```mermaid
+flowchart TD
+    subgraph R["HTTP 响应结构"]
+        direction TB
+        L1["① 状态行<br/>HTTP/1.1 200 OK\r\n"]
+        L2["② 头部1<br/>Content-Type: text/html; charset=utf-8\r\n"]
+        L3["③ 头部2<br/>Content-Length: 230\r\n"]
+        L4["④ 空行 \r\n ← 头体分隔符"]
+        L5["⑤ 正文<br/>文件内容或错误信息"]
+
+        L1 --> L2 --> L3 --> L4 --> L5
+    end
+
+    style L4 fill:#ffcdd2
+    style L5 fill:#e8f5e9
 ```
-状态行\r\n           ← HTTP/1.1 200 OK
-头部1\r\n            ← Content-Type: text/html; charset=utf-8
-头部2\r\n            ← Content-Length: 230
-\r\n                 ← 空行（头体分隔符，必须有！）
-正文                 ← 文件内容或错误信息
-```
+
+</details>
 
 ### 404 分支：文件不存在
 
@@ -295,28 +344,41 @@ response = "HTTP/1.1 200 OK\r\n"
 
 ## 八、请求生命周期
 
-每个浏览器请求完整经过的七步：
+每个浏览器请求完整经过的七步：`accept → recv → 解析路径 → 读文件(或404) → send → close → erase`
 
-```
-accept → recv → 解析路径 → 读文件(或404) → send → close → erase
+<details>
+<summary>点击展开：请求生命周期 — 浏览器 ↔ 服务器 ↔ 文件系统</summary>
+
+```mermaid
+sequenceDiagram
+    participant B as 浏览器
+    participant S as 服务器
+    participant F as 文件系统
+
+    B->>S: TCP SYN
+    Note over S: select 醒<br/>accept() 接连接
+
+    B->>S: GET / HTTP/1.1
+    Note over S: recv() → 解析<br/>path = "/"
+
+    S->>F: filepath = "www/index.html"
+    activate F
+    F-->>S: fopen() ✅ 文件存在
+    Note over S: fseek/ftell → size=230
+    S->>F: fread()
+    F-->>S: body (230字节)
+    deactivate F
+
+    Note over S: 拼 200 OK 响应<br/>Content-Length: 230
+
+    S->>B: HTTP/1.1 200 OK<br/>{HTML 内容}
+    Note over S: send → close → erase
+
+    Note over B: 渲染页面
+    Note over S: select 继续等下一个...
 ```
 
-```
-浏览器                 服务器                   文件系统
-   │                     │
-   ├─ TCP SYN ──────────→│ select醒 → accept
-   │                     │
-   ├─ GET / HTTP ───────→│ recv → 解析 → path="/"
-   │                     │ filepath="www/index.html"
-   │                     │                        ├─ fopen ✅
-   │                     │                        ├─ fseek/ftell
-   │                     │                        ├─ fread
-   │                     │                        └─ fclose
-   │                     │ 拼 200 响应
-   │←─ 200 + HTML ──────│ send → close → erase
-   │                     │
-   │  渲染页面            │ select 继续等下一个人...
-```
+</details>
 
 ---
 
