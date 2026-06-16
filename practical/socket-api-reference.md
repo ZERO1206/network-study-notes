@@ -15,26 +15,26 @@
 
 ```mermaid
 flowchart LR
-    subgraph 你的程序
-        A1[socket()]
-        A2[send()]
-        A3[recv()]
-        A4[close()]
+    subgraph P[你的程序]
+        A1["socket()"]
+        A2["send()"]
+        A3["recv()"]
+        A4["close()"]
     end
-    subgraph 内核
+    subgraph K[内核]
         B1[分配socket资源]
-        B2[TCP分包/IP路由/封装]
-        B3[解封装/重组/校验]
-        B4[发FIN/释放资源]
+        B2["TCP分包/IP路由/封装"]
+        B3["解封装/重组/校验"]
+        B4["发FIN/释放资源"]
     end
-    subgraph 网络
+    subgraph N[网络]
         C1[网卡发出]
         C2[网卡收到]
     end
-    A1 -->|""申请socket""| B1
-    A2 -->|""数据交给内核""| B2 -->|""发出""| C1
-    C2 -->|""收到""| B3 -->|""数据上交""| A3
-    A4 -->|""通知关闭""| B4
+    A1 -->|"申请socket"| B1
+    A2 -->|"数据交给内核"| B2 -->|"发出"| C1
+    C2 -->|"收到"| B3 -->|"数据上交"| A3
+    A4 -->|"通知关闭"| B4
 ```
 </details>
 
@@ -76,16 +76,16 @@ int sock = socket(AF_INET, SOCK_STREAM, 0);  // sock = 4
 
 ```mermaid
 flowchart TD
-    S[socket<span style="opacity:0.5">&#40;&#41;</span>] --> O[setsockopt<span style="opacity:0.5">&#40;&#41;</span>]
-    O --> B[bind<span style="opacity:0.5">&#40;&#41;</span>]
-    B --> L[listen<span style="opacity:0.5">&#40;&#41;</span>]
-    L --> LOOP{select/epoll_wait}
-    LOOP -->|""新连接""| A[accept<span style="opacity:0.5">&#40;&#41;</span>]
+    S["socket()"] --> O["setsockopt()"]
+    O --> B["bind()"]
+    B --> L["listen()"]
+    L --> LOOP{"select / epoll_wait"}
+    LOOP -->|"新连接"| A["accept()"]
     A --> LOOP
-    LOOP -->|""有数据""| R[recv<span style="opacity:0.5">&#40;&#41;</span>]
-    R -->|""回复""| W[send<span style="opacity:0.5">&#40;&#41;</span>]
+    LOOP -->|"有数据"| R["recv()"]
+    R -->|"回复"| W["send()"]
     W --> LOOP
-    R -->|""断连""| C[close<span style="opacity:0.5">&#40;&#41;</span>]
+    R -->|"断连"| C["close()"]
     C --> LOOP
 
     style S fill:#e1f5fe
@@ -535,9 +535,9 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    C1[socket<span style="opacity:0.5">&#40;&#41;</span>] --> C2[connect<span style="opacity:0.5">&#40;&#41;</span>]
-    C2 --> C3[send<span style="opacity:0.5">&#40;&#41;</span>/recv<span style="opacity:0.5">&#40;&#41;</span>]
-    C3 --> C4[close<span style="opacity:0.5">&#40;&#41;</span>]
+    C1["socket()"] --> C2["connect()"]
+    C2 --> C3["send() / recv()"]
+    C3 --> C4["close()"]
 ```
 </details>
 
@@ -626,20 +626,20 @@ int inet_pton(int af, const char *src, void *dst);
 
 ```mermaid
 flowchart TD
-    subgraph 服务器7步
-        S1[socket<span style="opacity:0.5">&#40;&#41;</span>] --> S2[setsockopt<span style="opacity:0.5">&#40;&#41;</span>]
-        S2 --> S3[bind<span style="opacity:0.5">&#40;&#41;</span> 绑定端口]
-        S3 --> S4[listen<span style="opacity:0.5">&#40;&#41;</span> 进入监听]
-        S4 --> S5[accept<span style="opacity:0.5">&#40;&#41;</span> 接连接]
-        S5 --> S6[recv<span style="opacity:0.5">&#40;&#41;</span>/send<span style="opacity:0.5">&#40;&#41;</span> 收发]
-        S6 --> S7[close<span style="opacity:0.5">&#40;&#41;</span>]
+    subgraph Server["服务器 7 步"]
+        S1["socket()"] --> S2["setsockopt()"]
+        S2 --> S3["bind() 绑定端口"]
+        S3 --> S4["listen() 进入监听"]
+        S4 --> S5["accept() 接连接"]
+        S5 --> S6["recv() / send() 收发"]
+        S6 --> S7["close()"]
     end
-    subgraph 客户端5步
-        C1[socket<span style="opacity:0.5">&#40;&#41;</span>] --> C2[connect<span style="opacity:0.5">&#40;&#41;</span> 发起握手]
-        C2 --> C3[send<span style="opacity:0.5">&#40;&#41;</span>/recv<span style="opacity:0.5">&#40;&#41;</span> 收发]
-        C3 --> C4[close<span style="opacity:0.5">&#40;&#41;</span>]
+    subgraph Client["客户端 5 步"]
+        C1["socket()"] --> C2["connect() 发起握手"]
+        C2 --> C3["send() / recv() 收发"]
+        C3 --> C4["close()"]
     end
-    C2 -.->|""三次握手""| S5
+    C2 -.->|"三次握手"| S5
 
     style S3 fill:#fff9c4
     style S4 fill:#fff9c4
@@ -913,16 +913,16 @@ sendfile(sock_fd, file_fd, nullptr, st.st_size);
 
 ```mermaid
 flowchart LR
-    subgraph 旧方案_fread_send
-        D1[磁盘] -->|""read()""| K1[内核缓冲区]
-        K1 -->|""① fread拷贝""| U[用户态 body]
-        U -->|""② send拷贝""| K2[内核缓冲区]
-        K2 -->|""发出""| N1[网卡]
+    subgraph Old["旧方案: fread + send"]
+        D1[磁盘] -->|"read()"| K1[内核缓冲区]
+        K1 -->|"① fread: CPU拷贝到用户态"| U["用户态 body<br/>❌ 多一次拷贝"]
+        U -->|"② send: CPU拷回内核"| K2[内核缓冲区]
+        K2 -->|"DMA"| N1[网卡]
     end
-    subgraph 新方案_sendfile
-        D2[磁盘] -->|""read()""| K3[内核缓冲区]
-        K3 -->|""sendfile零拷贝""| K4[内核缓冲区]
-        K4 -->|""发出""| N2[网卡]
+    subgraph New["新方案: sendfile"]
+        D2[磁盘] -->|"read()"| K3[内核缓冲区]
+        K3 -->|"sendfile: 内核直接转发<br/>✅ 零用户态拷贝"| K4[内核缓冲区]
+        K4 -->|"DMA"| N2[网卡]
     end
 
     style U fill:#ffcdd2
@@ -999,16 +999,16 @@ fstat(file_fd, &st);                      // st.st_size = 文件字节数
 
 ```mermaid
 flowchart TD
-    W1[while<span style="opacity:0.5">&#40;</span>true<span style="opacity:0.5">&#41;</span>] --> W2[""每轮重建<br/>FD_ZERO + FD_SET""]
-    W2 --> W3[""select<span style="opacity:0.5">&#40;</span>max_fd+1<span style="opacity:0.5">&#41;</span><br/>内核扫描全部fd""]
-    W3 --> W4{FD_ISSET<br/>server_fd?}
-    W4 -->|""是""| W5[""accept + push""]
+    W1["while(true)"] --> W2["每轮重建<br/>FD_ZERO + FD_SET<br/>❌ 每次都要重来"]
+    W2 --> W3["select(max_fd+1)<br/>❌ 内核扫描全部fd"]
+    W3 --> W4{"FD_ISSET<br/>server_fd?"}
+    W4 -->|"是"| W5["accept + push"]
     W5 --> W1
-    W4 -->|""否""| W6[""遍历所有clients<br/>逐个FD_ISSET""]
-    W6 --> W7{有数据?}
-    W7 -->|""是""| W8[""recv → 广播""]
+    W4 -->|"否"| W6["遍历所有clients<br/>逐个FD_ISSET<br/>❌ O(n)逐个查"]
+    W6 --> W7{"有数据?"}
+    W7 -->|"是"| W8["recv → 广播"]
     W8 --> W1
-    W7 -->|""否""| W1
+    W7 -->|"否"| W1
 
     style W2 fill:#ffcdd2
     style W3 fill:#fff9c4
@@ -1021,16 +1021,16 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    I[""启动时一次<br/>epoll_create1 + epoll_ctl&#40;ADD server&#41;""] --> W1
-    W1[while<span style="opacity:0.5">&#40;</span>true<span style="opacity:0.5">&#41;</span>] --> W2[""epoll_wait<span style="opacity:0.5">&#40;</span><span style="opacity:0.5">&#41;</span><br/>只返回有事件的fd""]
-    W2 --> W3[""遍历 events[0..n-1]<br/>全是有动静的fd""]
-    W3 --> W4{fd == server_fd?}
-    W4 -->|""新连接""| W5[""accept + epoll_ctl&#40;ADD&#41;""]
+    I["启动时一次注册<br/>epoll_create1 + epoll_ctl(ADD server)"] --> W1
+    W1["while(true)"] --> W2["epoll_wait()<br/>✅ 只返回有事件的fd"]
+    W2 --> W3["遍历 events[0..n-1]<br/>✅ 全是有动静的fd"]
+    W3 --> W4{"fd == server_fd?"}
+    W4 -->|"新连接"| W5["accept + epoll_ctl(ADD)"]
     W5 --> W1
-    W4 -->|""客户端消息""| W6{recv > 0?}
-    W6 -->|""有数据""| W7[""处理/广播""]
+    W4 -->|"客户端消息"| W6{"recv > 0?"}
+    W6 -->|"有数据"| W7["处理 / 广播"]
     W7 --> W1
-    W6 -->|""断连""| W8[""epoll_ctl&#40;DEL&#41;<br/>close + erase""]
+    W6 -->|"断连"| W8["epoll_ctl(DEL)<br/>close + erase"]
     W8 --> W1
 
     style I fill:#e8f5e9
