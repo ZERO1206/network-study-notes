@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320" font-family="'Courier New', monospace" font-size="16">
+  <defs>
+    <style>
+      @keyframes step1_path_scan {
+        0%, 10% { opacity: 1; transform: translate(0px,0); }
+        30%, 100% { opacity: 0; }
+      }
+      @keyframes step2_path_jump {
+        0%, 30% { opacity: 0; }
+        40%, 50% { opacity: 1; transform: translate(0px,0); }
+        65%, 100% { opacity: 0; }
+      }
+      @keyframes step3_end_scan {
+        0%, 60% { opacity: 0; }
+        70%, 80% { opacity: 1; transform: translate(0px,0); }
+        95%, 100% { opacity: 0; }
+      }
+      @keyframes step4_result {
+        0%, 90% { opacity: 0; }
+        95%, 100% { opacity: 1; }
+      }
+      .label { font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; }
+      .code { font-size: 20px; letter-spacing: 1px; }
+      .pointer-label { font-size: 12px; font-weight: bold; }
+    </style>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="800" height="320" fill="#1e1e1e" rx="8"/>
+
+  <!-- 标题 -->
+  <text x="400" y="28" text-anchor="middle" fill="#ffd700" font-size="15" font-family="Arial, sans-serif" font-weight="bold">指针移动可视化 — 循环播放中</text>
+
+  <!-- ===== 阶段标签 ===== -->
+  <text x="20" y="55" class="label" fill="#64b5f6">buf →</text>
+
+  <!-- 代码字符串 -->
+  <text x="20" y="82" class="code" fill="#f8f8f8">
+    <tspan fill="#4fc3f7">GET</tspan> /index.html HTTP/1.1
+  </text>
+
+  <!-- 第一步：path 跳过 GET —— 动态箭头 + 解释文字（淡入淡出） -->
+  <g style="animation: step1_path_scan 6s ease-in-out infinite">
+    <!-- path 箭头停在 'G' -->
+    <text x="20" y="110" class="pointer-label" fill="#ff9800">path</text>
+    <line x1="24" y1="114" x2="24" y2="98" stroke="#ff9800" stroke-width="2"/>
+    <polygon points="24,98 20,104 28,104" fill="#ff9800"/>
+
+    <!-- 移动箭头：从 G 到第一个空格 -->
+    <text x="20" y="130" class="pointer-label" fill="#ff9800">path</text>
+    <line x1="24" y1="134" x2="58" y2="98" stroke="#ff9800" stroke-width="2" stroke-dasharray="4,3"/>
+    <polygon points="58,98 54,104 62,104" fill="#ff9800"/>
+
+    <!-- 说明 -->
+    <text x="80" y="115" fill="#aaa" font-size="13" font-family="Arial">第1步：指针扫描 "GET"，遇到第一个空格停下</text>
+  </g>
+
+  <!-- 第二步：path 跳过空格，站到 '/' -->
+  <g style="animation: step2_path_jump 6s ease-in-out infinite">
+    <text x="58" y="110" class="pointer-label" fill="#4caf50">path</text>
+    <line x1="62" y1="114" x2="62" y2="98" stroke="#4caf50" stroke-width="2"/>
+    <polygon points="62,98 58,104 66,104" fill="#4caf50"/>
+
+    <!-- 箭头从空格位置跳到 '/' -->
+    <text x="58" y="130" class="pointer-label" fill="#4caf50">path</text>
+    <line x1="62" y1="134" x2="84" y2="98" stroke="#4caf50" stroke-width="2" stroke-dasharray="4,3"/>
+    <polygon points="84,98 80,104 88,104" fill="#4caf50"/>
+
+    <!-- 说明 -->
+    <text x="110" y="115" fill="#aaa" font-size="13" font-family="Arial">第2步：跳过空格，站到 '/' 位置 —— 这就是路径起点</text>
+  </g>
+
+  <!-- 第三步：end 从 '/' 出发，走到第二个空格 -->
+  <g style="animation: step3_end_scan 6s ease-in-out infinite">
+    <text x="84" y="155" class="pointer-label" fill="#e91e63">end</text>
+    <line x1="88" y1="159" x2="88" y2="98" stroke="#e91e63" stroke-width="2"/>
+    <polygon points="88,98 84,104 92,104" fill="#e91e63"/>
+
+    <text x="84" y="175" class="pointer-label" fill="#ff9800">path</text>
+    <line x1="88" y1="179" x2="88" y2="98" stroke="#ff9800" stroke-width="2"/>
+    <polygon points="88,98 84,104 92,104" fill="#ff9800"/>
+
+    <!-- end 从 '/' 扫描到第二个空格 -->
+    <text x="84" y="195" class="pointer-label" fill="#e91e63">end</text>
+    <line x1="88" y1="199" x2="266" y2="98" stroke="#e91e63" stroke-width="2" stroke-dasharray="4,3"/>
+    <polygon points="266,98 262,104 270,104" fill="#e91e63"/>
+
+    <!-- 说明 -->
+    <text x="280" y="160" fill="#aaa" font-size="13" font-family="Arial">第3步：end 从 '/' 出发</text>
+    <text x="280" y="180" fill="#aaa" font-size="13" font-family="Arial">扫描到第二个空格停下</text>
+  </g>
+
+  <!-- ===== 第二部分：结果展示区 ===== -->
+  <g style="animation: step4_result 6s ease-in-out infinite">
+    <!-- 分隔线 -->
+    <line x1="20" y1="228" x2="780" y2="228" stroke="#555" stroke-width="1"/>
+
+    <text x="20" y="248" class="label" fill="#4caf50">*end = '\0' 截断后 →</text>
+
+    <!-- 截断后的 buf -->
+    <text x="20" y="275" class="code" fill="#f8f8f8">
+      <tspan fill="#4fc3f7">GET</tspan> /index.html
+      <tspan fill="#ff5252">█</tspan>
+      HTTP/1.1...
+    </text>
+
+    <!-- path 到 \0 的范围标注 -->
+    <rect x="58" y="258" width="198" height="22" fill="#4caf50" opacity="0.15" rx="3"/>
+    <text x="160" y="295" text-anchor="middle" fill="#4caf50" font-size="12" font-family="Arial">← path 指向 "/index.html"（23 字节，已截断）→</text>
+
+    <!-- \0 位置说明 -->
+    <text x="256" y="310" class="pointer-label" fill="#ff5252">\0</text>
+  </g>
+
+  <!-- 右下角循环提示 -->
+  <text x="780" y="310" text-anchor="end" fill="#666" font-size="11" font-family="Arial">循环播放 · 6秒/周期</text>
+</svg>
