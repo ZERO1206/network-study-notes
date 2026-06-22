@@ -252,24 +252,25 @@ UDP 无连接，`close()` 只是释放本地资源，不产生任何网络流量
 
 ## 五、完整时序图
 
-```
-UDP 服务器                          UDP 客户端
-─────────                          ─────────
-socket(SOCK_DGRAM)                  socket(SOCK_DGRAM)
-  │                                    │
-bind() ← 登记 IP:Port                 │
-  │                                    │
-  │                                    │
-  │    ←── "Hello UDP!\n" ──────── sendto() ← 直接发，没有握手
-recvfrom() ← 收到                      │
-  │     也知道对方地址了              │
-  │                                    │
-sendto() ── "Hello UDP!\n" ──→  recvfrom() ← 收到回复
-  │                                    │
-close()                             close() ← 直接关，没有挥手
+```mermaid
+sequenceDiagram
+    participant S as UDP 服务器
+    participant C as UDP 客户端
+    
+    S->>S: socket(SOCK_DGRAM)
+    C->>C: socket(SOCK_DGRAM)
+    S->>S: bind() 登记 IP:Port
+    
+    C->>S: sendto() "Hello UDP!\n"（直接发，无握手）
+    S->>S: recvfrom() 收到，知道对方地址
+    S->>C: sendto() "Hello UDP!\n"
+    C->>C: recvfrom() 收到回复
+    
+    S->>S: close() 直接关，无挥手
+    C->>C: close() 直接关，无挥手
 ```
 
-**对比 TCP 少了什么：** 没有 SYN/SYN+ACK/ACK 三个握手包，没有 FIN/ACK 四个挥手包。发送方一发出去接收方就能收，中间没有连接建立的开销——这就是为什么 UDP 快。
+**对比 TCP 少了什么：** 没有 `connect()`、`listen()`、`accept()`，没有三次握手和四次挥手。数据直接发出去，延迟极低——这就是为什么 UDP 快。
 
 ---
 

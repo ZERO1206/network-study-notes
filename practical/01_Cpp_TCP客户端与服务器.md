@@ -456,28 +456,31 @@ send(sock, msg, strlen(msg), 0);   // strlen = 11（正确）
 
 ## 三、完整调用时序图
 
-```
-服务器端                           客户端
-────────                          ────────
-socket()                          socket()
-  │                                 │
-bind() ← 登记 IP:Port              │
-  │                                 │
-listen() ← 转为 LISTEN 状态        │
-  │                                 │
-  │    ←── SYN ──────────────── connect() ← 发起三次握手
-  │    ── SYN+ACK ───────────→      │         （内核自动完成）
-  │    ←── ACK ────────────────     │
-  │                                 │
-accept() ← 解阻塞，拿到 client_fd   │
-  │                                 │
-  │    ←── "Hello TCP!\n" ──── send()
-recv() ← 收到                       │
-  │                                 │
-send() ── "Hello TCP!\n" ──→   recv() ← 收到回复
-  │                                 │
-close(client_fd) ← 四次挥手 →  close() ← 客户端进 TIME_WAIT
-close(server_fd)
+```mermaid
+sequenceDiagram
+    participant S as 服务器
+    participant C as 客户端
+    
+    S->>S: socket()
+    C->>C: socket()
+    S->>S: bind() 登记 IP:Port
+    S->>S: listen() 转为 LISTEN 状态
+    
+    C->>S: connect() 发起连接
+    Note over C,S: ① SYN
+    Note over C,S: ② SYN+ACK
+    Note over C,S: ③ ACK（三次握手完成）
+    
+    S->>S: accept() 解阻塞，拿到 client_fd
+    
+    C->>S: send() "Hello TCP!\n"
+    S->>S: recv() 收到
+    S->>C: send() "Hello TCP!\n"
+    C->>C: recv() 收到回复
+    
+    C->>S: close() 四次挥手
+    Note over C: 客户端进 TIME_WAIT
+    S->>S: close(client_fd) + close(server_fd)
 ```
 
 ---
