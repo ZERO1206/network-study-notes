@@ -44,22 +44,13 @@ flowchart TD
 **把"谁有动静"和"怎么办"分开：**
 
 ```mermaid
-flowchart LR
-    subgraph Reactor框架
-        A[事件循环] --> B[select/epoll]
-        B --> C[查注册表]
-        C --> D[调对应的回调函数]
-    end
+flowchart TD
+    A["select/epoll 等事件"] --> B["有 fd 可读了"]
+    B --> C["查注册表: 这个 fd 配的哪个回调?"]
+    C --> D["调用对应的回调函数"]
     
-    subgraph 用户代码（回调函数）
-        E[handle_accept]
-        F[handle_read]
-        G[handle_write]
-    end
-    
-    D --> E
-    D --> F
-    D --> G
+    D --> E["回调内部: recv → 处理业务 → send"]
+    E --> A
 ```
 
 Reactor 框架只负责一件事："fd 有动静 → 找到注册的回调 → 调用它"。**业务逻辑完全写在回调里。** 事件循环永不变，想加功能只加回调。
