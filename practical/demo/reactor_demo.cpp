@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <functional>
+#include <algorithm>    // std::remove_if
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -42,6 +43,12 @@ public:
         }
     }
 
+    void remove_handler(int fd) {
+        auto it = std::remove_if(handlers_.begin(), handlers_.end(),
+            [fd](const HandlerEntry& e) { return e.fd == fd; });
+        handlers_.erase(it, handlers_.end());
+    }
+
     void stop() { running_ = false; }
 
 private:
@@ -79,7 +86,9 @@ int main() {
             char buf[1024];
             int n = recv(cfd, buf, sizeof(buf)-1, 0);
             if(n <= 0) {
+                std::cout << "[Reactor] 客户端断开 fd=" << cfd << "\n";
                 close(cfd);
+                reactor.remove_handler(cfd);
                 return;
             }
             buf[n] = '\0';
