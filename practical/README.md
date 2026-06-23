@@ -36,4 +36,4 @@ which g++ ss curl nc tcpdump strace
 |------|------|---------|------|
 | 8 | 多线程/线程池（epoll + pthread） | 1h | ✅ |
 | 9 | 简易代理服务器 | 1h | ✅ |
-| 10 | 事件驱动/Reactor 模式 | — | ⬜ |
+| 10 | 事件驱动/Reactor 模式 | 45min | ✅ |
